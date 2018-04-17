@@ -1,0 +1,52 @@
+#include <incmode>.
+		 
+#program base.
+
+% Type declarations
+group(mis). group(can).
+bank(left). bank(right).
+number(0..3).
+
+opposite(left,right). opposite(right,left).
+
+% Initial state
+num(mis,left,3,0). num(can,left,3,0). boat(left,0).
+num(mis,right,0,0). num(can,right,0,0).
+
+#program step(t).
+
+% Executability axioms
+:- move(M,C,t), M=0, C=0.
+:- move(M,C,t), M+C>2.
+:- moved(G,N,t), boat(B,t-1), num(G,B,M,t-1), N>M.
+
+% Effect axioms
+num(G,B,M+N,t) :- num(G,B,M,t-1), boat(B,t), moved(G,N,t).
+num(G,B,M-N,t) :- num(G,B,M,t-1), boat(B,t-1), moved(G,N,t).
+boat(B1,t) :- boat(B,t-1), opposite(B,B1).
+
+% Auxiliary (action attributes)
+moved(mis,M,t) :- move(M,C,t).
+moved(can,C,t) :- move(M,C,t).
+
+% Inertia
+num(G,B,N,t) :- num(G,B,N,t-1), not ab(G,B,N,t).
+ab(G,B,N,t) :- num(G,B,M,t), M!=N, number(N).
+boat(B,t) :- boat(B,t-1), opposite(B,B1), not boat(B1,t).
+
+% Action generation
+1 {move(X,Y,t) : number(X),number(Y) } 1.
+
+#program check(t).
+% Constraints: unique value
+:- num(G,B,N,t), num(G,B,M,t), M!=N.
+:- boat(left,t), boat(right,t).
+
+% Missionaries not outnumbered by canibals
+:- num(mis,B,M,t), num(can,B,C,t), C>M, M>0.
+
+:- query(t), not goal(t).
+goal(t) :- num(mis,right,3,t),
+           num(can,right,3,t).
+
+#show move/3.    % We only show performed actions
