@@ -9,7 +9,7 @@
 row(0..r).
 column(0..c).
 type(obs;free;goal;initial;actual).
-dir(up;down;left;right).
+dir(u;d;l;r).
 % tile(R,C,T), row(R), column(C), type(T).
 available(D,R,C) :- tile(R,C,_), tile(R2,C2,T), R-R2=1, D=up, T!=obs.
 available(D,R,C) :- tile(R,C,_), tile(R2,C2,T), R2-R=1, D=down, T!=obs.
@@ -53,30 +53,32 @@ tile(4,6,free).
 tile(4,7,free).
 tile(4,8,goal).
 
-roomba(R,C) :- tile(R,C,initial).
+roomba(R,C,0) :- tile(R,C,initial).
 
 #program step(t).
 
 % Executability axioms
-%:- move(D,t,R,C), -available(D,R,C).
 
 % Effect axioms
-%:- move(D,t), not available(D).
+roomba(R,C,t) :- roomba(R+1,C,t-1), move(D,t), dir(D), D=u.
+roomba(R,C,t) :- roomba(R-1,C,t-1), move(D,t), dir(D), D=d.
+roomba(R,C,t) :- roomba(R,C+1,t-1), move(D,t), dir(D), D=l.
+roomba(R,C,t) :- roomba(R,C-1,t-1), move(D,t), dir(D), D=r.
+
 % Auxiliary (action attributes)
 
 % Inertia
 
 % Action generation
-% 1 {move(X,Y,t) : number(X),number(Y) } 1.
-1 { move(D,t) : dir(D) } 1.
+1 { move(D,t) : dir(D) } 1. % :- available(D,R,C), roomba(R,C).
 
 #program check(t).
 
 % Covered tiles and robot on goal.
 %covered(R,C) :- tile(R,C,T), row(R), column(C), type(T), T=free.
 
-%:- query(t), not goal(t).
-goal(t) :- goal(R,C), .
+:- query(t), not goal(t).
+goal(t) :- tile(R,C,goal), roomba(R,C,t).
 #show move/2.    % We only show performed actions
 %#show available/3.
-%#show roomba/2.
+#show roomba/3.
