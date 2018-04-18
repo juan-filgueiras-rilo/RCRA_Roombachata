@@ -1,22 +1,13 @@
-#include <incmode>.
-		 
+#include <incmode>.		 
 #program base.
-#const r=4.
-#const c=8.
+
 % Type declarations
-% D={u,d,l,r}.
-% move(D,T).
-row(0..r).
-column(0..c).
-type(obs;free;goal;initial;actual).
+
+type(obs;free;goal;initial).
 dir(u;d;l;r).
-% tile(R,C,T), row(R), column(C), type(T).
-available(D,R,C) :- tile(R,C,_), tile(R2,C2,T), R-R2=1, D=up, T!=obs.
-available(D,R,C) :- tile(R,C,_), tile(R2,C2,T), R2-R=1, D=down, T!=obs.
-available(D,R,C) :- tile(R,C,_), tile(R2,C2,T), C-C2=1, D=left, T!=obs.
-available(D,R,C) :- tile(R,C,_), tile(R2,C2,T), C2-C=1, D=right, T!=obs.
 
 % Initial state
+
 tile(1,1,initial).
 tile(1,2,free).
 tile(1,3,free).
@@ -55,30 +46,50 @@ tile(4,8,goal).
 
 roomba(R,C,0) :- tile(R,C,initial).
 
+%cleaned(R,C,0) :- tile(R,C,free).
+
 #program step(t).
 
 % Executability axioms
+% Roomba can't be on a obstacle tile.
+:- roomba(R,C,t), tile(R,C,obs).
+% Try to avoid going back and forth(?)
+:~ roomba(R,C,t-1), roomba(R1,C1,t-1), roomba(R,C,t), R!=R1. [1]
+:~ roomba(R,C,t-1), roomba(R1,C1,t-1), roomba(R,C,t), C!=C1. [1]
 
 % Effect axioms
+% Roomba moves on a row or on a column on a incremental t given a direction dir(D).
 roomba(R,C,t) :- roomba(R+1,C,t-1), move(D,t), dir(D), D=u.
 roomba(R,C,t) :- roomba(R-1,C,t-1), move(D,t), dir(D), D=d.
 roomba(R,C,t) :- roomba(R,C+1,t-1), move(D,t), dir(D), D=l.
 roomba(R,C,t) :- roomba(R,C-1,t-1), move(D,t), dir(D), D=r.
 
 % Auxiliary (action attributes)
+% If roomba were on a free tile on a time t, he cleaned that tile.
+cleaned(R,C,t) :- roomba(R,C,t).
 
 % Inertia
+% Roomba robot can't be on two places given the same time t.
+:- roomba(R1,C1,t), roomba(R2,C2,t), R1!=R2.
+:- roomba(R1,C1,t), roomba(R2,C2,t), C1!=C2.
+
+% We have to suppose that if a tile was cleaned at t-1 time, it's still clean at t.
+%cleaned(R,C,t) :- cleaned(R,C,t-1).
 
 % Action generation
-1 { move(D,t) : dir(D) } 1. % :- available(D,R,C), roomba(R,C).
+% Always move in one and only one direction dir(D).
+1 { move(D,t) : dir(D) } 1.
 
 #program check(t).
 
-% Covered tiles and robot on goal.
-%covered(R,C) :- tile(R,C,T), row(R), column(C), type(T), T=free.
+% Check for the robot on the goal and all the free tiles covered by the robot.
 
+% If there's a free tile that hasn't been covered, the entire floor isn't considered clean yet.
+unclean(t) :- not cleaned(R,C,_), tile(R,C,free).
 :- query(t), not goal(t).
-goal(t) :- tile(R,C,goal), roomba(R,C,t).
+goal(t) :- tile(R,C,goal), roomba(R,C,t), not unclean(t).
+
 #show move/2.    % We only show performed actions
-%#show available/3.
-#show roomba/3.
+%#show roomba/3.
+%#show cleaned/3.
+%#show unclean/1.
