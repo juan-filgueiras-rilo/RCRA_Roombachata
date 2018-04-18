@@ -13,59 +13,75 @@ tile(1,2,free).
 tile(1,3,free).
 tile(1,4,free).
 tile(1,5,free).
-tile(1,6,obs).
-tile(1,7,obs).
+tile(1,6,free).
+tile(1,7,free).
 tile(1,8,free).
+tile(1,9,free).
 
 tile(2,1,free).
-tile(2,2,free).
-tile(2,3,free).
-tile(2,4,free).
-tile(2,5,free).
+tile(2,2,obs).
+tile(2,3,obs).
+tile(2,4,obs).
+tile(2,5,obs).
 tile(2,6,free).
-tile(2,7,free).
-tile(2,8,free).
+tile(2,7,obs).
+tile(2,8,obs).
+tile(2,9,free).
 
 tile(3,1,free).
 tile(3,2,free).
-tile(3,3,obs).
-tile(3,4,obs).
+tile(3,3,free).
+tile(3,4,free).
 tile(3,5,obs).
 tile(3,6,free).
 tile(3,7,free).
 tile(3,8,free).
+tile(3,9,free).
 
 tile(4,1,free).
-tile(4,2,free).
-tile(4,3,free).
-tile(4,4,obs).
+tile(4,2,obs).
+tile(4,3,obs).
+tile(4,4,free).
 tile(4,5,obs).
-tile(4,6,free).
-tile(4,7,free).
-tile(4,8,goal).
+tile(4,6,obs).
+tile(4,7,obs).
+tile(4,8,obs).
+tile(4,9,free).
+
+tile(5,1,free).
+tile(5,2,obs).
+tile(5,3,obs).
+tile(5,4,free).
+tile(5,5,free).
+tile(5,6,free).
+tile(5,7,free).
+tile(5,8,free).
+tile(5,9,goal).
+
+
 
 roomba(R,C,0) :- tile(R,C,initial).
-
-%cleaned(R,C,0) :- tile(R,C,free).
 
 #program step(t).
 
 % Executability axioms
 % Roomba can't be on a obstacle tile.
 :- roomba(R,C,t), tile(R,C,obs).
+
 % Try to avoid going back and forth(?)
-:~ roomba(R,C,t-1), roomba(R1,C1,t-1), roomba(R,C,t), R!=R1. [1]
-:~ roomba(R,C,t-1), roomba(R1,C1,t-1), roomba(R,C,t), C!=C1. [1]
+%:~ roomba(R,C,t-2), roomba(R1,C1,t-1), roomba(R,C,t), R!=R1. [1]
+%:~ roomba(R,C,t-2), roomba(R1,C1,t-1), roomba(R,C,t), C!=C1. [1]
+%:~ roomba(R,C,t+1), cleaned(R,C,_). [1]
 
 % Effect axioms
-% Roomba moves on a row or on a column on a incremental t given a direction dir(D).
-roomba(R,C,t) :- roomba(R+1,C,t-1), move(D,t), dir(D), D=u.
-roomba(R,C,t) :- roomba(R-1,C,t-1), move(D,t), dir(D), D=d.
-roomba(R,C,t) :- roomba(R,C+1,t-1), move(D,t), dir(D), D=l.
-roomba(R,C,t) :- roomba(R,C-1,t-1), move(D,t), dir(D), D=r.
+% Roomba moves into a tile by a row or column on an incremental t given a direction dir(D).
+roomba(R,C,t) :- roomba(R+1,C,t-1), move(D,t), dir(D), D=u, tile(R,C,_).
+roomba(R,C,t) :- roomba(R-1,C,t-1), move(D,t), dir(D), D=d, tile(R,C,_).
+roomba(R,C,t) :- roomba(R,C+1,t-1), move(D,t), dir(D), D=l, tile(R,C,_).
+roomba(R,C,t) :- roomba(R,C-1,t-1), move(D,t), dir(D), D=r, tile(R,C,_).
 
 % Auxiliary (action attributes)
-% If roomba were on a free tile on a time t, he cleaned that tile.
+% If roomba was on a free tile on a time t, he cleaned that tile.
 cleaned(R,C,t) :- roomba(R,C,t).
 
 % Inertia
@@ -73,8 +89,8 @@ cleaned(R,C,t) :- roomba(R,C,t).
 :- roomba(R1,C1,t), roomba(R2,C2,t), R1!=R2.
 :- roomba(R1,C1,t), roomba(R2,C2,t), C1!=C2.
 
-% We have to suppose that if a tile was cleaned at t-1 time, it's still clean at t.
-%cleaned(R,C,t) :- cleaned(R,C,t-1).
+% We suppose that if a tile was cleaned at t-1 time, it's still clean at t.
+cleaned(R,C,t) :- cleaned(R,C,t-1).
 
 % Action generation
 % Always move in one and only one direction dir(D).
@@ -82,10 +98,10 @@ cleaned(R,C,t) :- roomba(R,C,t).
 
 #program check(t).
 
-% Check for the robot on the goal and all the free tiles covered by the robot.
-
 % If there's a free tile that hasn't been covered, the entire floor isn't considered clean yet.
-unclean(t) :- not cleaned(R,C,_), tile(R,C,free).
+unclean(t) :- not cleaned(R,C,t), tile(R,C,free).
+
+% Check for the robot on the goal and all the free tiles covered by the robot.
 :- query(t), not goal(t).
 goal(t) :- tile(R,C,goal), roomba(R,C,t), not unclean(t).
 

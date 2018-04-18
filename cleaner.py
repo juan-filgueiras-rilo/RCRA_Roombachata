@@ -44,7 +44,7 @@ class tabla:
 	def showMapa(self,salida):
 		i=0
 		for i in range(0,len(self.lmapa)):
-			if ((i % (self.maxx+1) ==0) and (i!=0)):
+			if ((i % (self.maxx+1) == 0) and (i!=0)):
 				salida.storetail("\n")
 			salida.storetail("tile("+str(math.floor(i/(self.maxx+1))+1)+","+str(i%(self.maxx+1)+1)+","+self.gettype(self.lmapa[i])+").\n")
 	def gettype (self,simbolo):
