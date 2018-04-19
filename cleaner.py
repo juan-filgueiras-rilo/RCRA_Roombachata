@@ -33,6 +33,9 @@ class tabla:
 		j=0
 		linea="Apruebanos"
 		while (linea!=""):
+			if (linea=="\n"): 
+				linea=f.readline()
+				continue
 			self.maxx= len(linea)-2
 			
 			linea=f.readline()
