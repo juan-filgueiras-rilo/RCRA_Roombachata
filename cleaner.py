@@ -41,8 +41,18 @@ class tabla:
 				self.maxx= len(linea)-2
 				for i in range(0,len(linea)-1):
 					self.lmapa.append((linea[i]))
-	def toClingo(self,salida):
-		pass
+	def toClingo(self,salidafinal,base):
+		linea="apruebanos"
+		f=open(base,'r')
+		
+		while(linea!="% Initial state\n"):
+			linea=f.readline()
+			salidafinal.storetail(linea)
+		self.showMapa(salidafinal)
+		while(linea!=""):
+			linea=f.readline()
+			salidafinal.storetail(linea)
+		f.close()
 	def showMapa(self,salida):
 		i=0
 		for i in range(0,len(self.lmapa)):
@@ -56,14 +66,14 @@ class tabla:
 		if simbolo=="@": return "initial"
 		if simbolo=="X": return "goal"
 
-
 def main():
 	t=tabla(sys.argv[1])
-	s=salida("salida.txt")
-	t.showMapa(s)
-	s.publica()
-	s.close()
-	#os.system('clingo dominosa_rules.txt initial_state.txt -c n=' + str(t.maxx))
+	sclgsol=salida("finalrules.txt")	
+	
+	t.toClingo(sclgsol,"cleaner.txt")
+	sclgsol.privado()
+	sclgsol.close()
+	os.system('clingo 0 finalrules.txt')
 	
 if __name__ == "__main__":
     # execute only if run as a script
